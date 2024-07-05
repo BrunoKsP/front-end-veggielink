@@ -1,0 +1,82 @@
+name: Versionar e gerar release
+
+on:
+  push:
+    branches: ["main"]
+    paths-ignore:
+      - 'package.json'
+      - 'CHANGELOG.md'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checar se o commit contém [skip ci]
+      if: contains(github.event.head_commit.message, '[skip ci]')
+      run: echo "Commit contains [skip ci], skipping build." && exit 0
+
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.MINHA_CHAVE }}
+
+    - name: Configurar Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '16'
+
+    - name: Instalar dependências
+      run: npm install
+
+    - name: Build
+      run: npm run build
+
+    - name: Configuração git
+      run: |
+        git config --local user.email "bbrunosiqueira14@gmail.com"
+        git config --local user.name "BrunKsp"
+
+    - name: Verificar status do Git
+      run: |
+        if [[ -n "$(git status --porcelain)" ]]; then
+          echo "Git working directory not clean. Exiting."
+          exit 1
+        fi
+
+    - name: Versionar manualmente
+      id: versionize
+      run: |
+        VERSION=$(npm version patch -m "chore(release): %s [skip ci]")
+        echo "New version: $VERSION"
+        echo "VERSION=$VERSION" >> $GITHUB_ENV
+
+    - name: Caso não precise de release
+      if: steps.versionize.outcome != 'success'
+      run: echo "Skipping Release. No release required."
+
+    - name: Subir alterações no git
+      if: steps.versionize.outcome == 'success'
+      run: |
+        git push origin main --follow-tags
+
+    - name: "Criar release"
+      if: steps.versionize.outcome == 'success'
+      uses: "actions/github-script@v5"
+      with:
+        github-token: "${{ secrets.MINHA_CHAVE }}"
+        script: |
+          try {
+            const version = process.env.VERSION
+            await github.rest.repos.createRelease({
+              draft: false,
+              generate_release_notes: true,
+              name: version,
+              owner: context.repo.owner,
+              prerelease: false,
+              repo: context.repo.repo,
+              tag_name: version,
+            });
+          } catch (error) {
+            core.setFailed(error.message);
+          }
