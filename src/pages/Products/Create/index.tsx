@@ -18,6 +18,7 @@ import BasicDatePicker from "../../../components/DatePicker";
 import { useNavigate } from "react-router-dom";
 import DrawerPage from "../../../components/Drawer";
 import { MenuOutlined } from "@ant-design/icons";
+import ImageUploader from "../../../components/Image64";
 
 interface IForm {
   name: string;
@@ -37,10 +38,11 @@ const validationSchema = yup.object({
 });
 
 export default function CreateProduct() {
-  const [categoryId, setCategoryId] = useState<string | undefined>("");
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [image, setImage] = useState("");
+  const [loading, setLoading] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [categoryId, setCategoryId] = useState<string | undefined>("");
 
   const {
     handleSubmit,
@@ -54,11 +56,11 @@ export default function CreateProduct() {
   const submitForm = useCallback(
     async (data: IForm) => {
       setLoading(true);
-
       try {
         await createProduct({
           ...data,
           categoryId: categoryId,
+          thumb: image,
         });
         navigate("/products");
       } catch (error) {
@@ -67,7 +69,7 @@ export default function CreateProduct() {
         setLoading(false);
       }
     },
-    [categoryId, navigate]
+    [categoryId, image, navigate]
   );
 
   const handleCategoryChange = (categoryId: string) => {
@@ -120,6 +122,13 @@ export default function CreateProduct() {
               <LoadingSpinner></LoadingSpinner>
             ) : (
               <>
+                <Image>
+                  <ImageUploader
+                    onChange={setImage}
+                    defaultValue={""}
+                  />
+                </Image>
+
                 <BasicDatePicker
                   label="Data de Plantio"
                   onChange={handleDateChange}

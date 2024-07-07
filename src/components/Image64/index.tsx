@@ -9,6 +9,8 @@ import {
 import Notification from "../../components/Notification";
 import { storage } from "../../utils/firebaseConfig";
 import { getDownloadURL, ref, uploadBytesResumable } from "firebase/storage";
+import LoadingSpinner from "../Loader";
+import { CircularProgress } from "@mui/material";
 
 interface ImageUploaderProps {
   onChange: (base64Image: string) => void;
@@ -19,63 +21,70 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({
   onChange,
   defaultValue,
 }) => {
-  const [imageBase64, setImageBase64] = useState<string>("");
-  const [, setImageFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState<boolean>(false);
+  const [imageBase64, setImageBase64] = useState<string | undefined>(
+    defaultValue
+  );
   const [notification, setNotification] = useState<{
     type: "success" | "error" | "warning";
     content: string;
   } | null>(null);
 
   useEffect(() => {
-    if (defaultValue) {
-      setImageBase64(defaultValue);
-      onChange(defaultValue);
-    }
-  }, [defaultValue, onChange]);
+    setImageBase64(defaultValue);
+  }, [defaultValue]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setImageFile(file);
-  
-      // Cria uma referência ao caminho do arquivo no Firebase Storage
-      const storageRef = ref(storage, `images/${file.name}`);
-  
-      // Faz o upload do arquivo
-      const uploadTask = uploadBytesResumable(storageRef, file);
-  
-      uploadTask.on(
-        "state_changed",
-        (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-  
-        },
-        (error) => {
-          setNotification({ type: "error", content: "Erro ao fazer upload da imagem!" });
-        },
-        
-        () => {
-          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+      try {
+        const storageRef = ref(storage, `images/${file.name}`);
+        const uploadTask = uploadBytesResumable(storageRef, file);
+        setUploading(true);
+        uploadTask.on(
+          "state_changed",
+          (snapshot) => {},
+          (error) => {
+            setNotification({
+              type: "error",
+              content: "Erro ao fazer upload da imagem!",
+            });
+            setUploading(false);
+          },
+          async () => {
+            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
             setImageBase64(downloadURL);
             onChange(downloadURL);
-          });
-        }
-       
-      );
+            setUploading(false);
+          }
+        );
+      } catch (error) {
+        setNotification({
+          type: "error",
+          content: "Erro ao processar o upload da imagem!",
+        });
+        setUploading(false);
+      }
     }
   };
 
   return (
     <>
-      <>
-        {notification && (
-          <Notification
-            type={notification.type}
-            content={notification.content}
+      {notification && (
+        <Notification type={notification.type} content={notification.content} />
+      )}
+      <ImageView>
+        {uploading && (
+          <CircularProgress
+            style={{
+              position: "absolute",
+              top: "40%",
+              left: "40%",
+              transform: "translate(-50%, -50%)",
+              color : "#08F9B0"
+            }}
           />
         )}
-      </>
-      <ImageView>
         <ProductImage src={imageBase64} alt="Preview" />
         <UploadIcon htmlFor="upload-input">
           <Icon />

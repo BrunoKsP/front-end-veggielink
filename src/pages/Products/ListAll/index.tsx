@@ -56,6 +56,7 @@ const ListAllProducts: React.FC = () => {
         const categoryData: ICategory = response.data;
         setProducts(categoryData.products);
         setCategoryName(categoryData.name);
+        console.log(response)
       } catch (error) {
         setNotification({ type: "error", content: "Erro Ao Buscar Produto!" });
         setTimeout(() => {

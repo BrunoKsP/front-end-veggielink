@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Configuração do Axios
 export const api = axios.create({
-  baseURL: "https://back-end-veggielink.onrender.com/",
+  baseURL: "https://back-end-veggielink-w1go.onrender.com/",
   headers: {
     "Content-Type": "application/json",
   },
