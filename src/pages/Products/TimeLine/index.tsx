@@ -28,7 +28,7 @@ interface ProductData {
   observation: string;
   fertilizer: string;
   plantingDate: string;
-  harvestDate: string;
+  harverstDate: string;
   preparingDate: string;
 }
 
@@ -54,7 +54,6 @@ const TimeLineProduct: React.FC = () => {
     const fetchProduct = async () => {
       try {
         const data = await getProductById(id as string);
-        console.log(data);
         setProduct(data.data);
       } catch (error) {
         setNotification({ type: "error", content: "Erro Ao Buscar Produto!" });
@@ -102,7 +101,7 @@ const TimeLineProduct: React.FC = () => {
             items={[
               {
                 color: "green",
-                children: `Colhido dia ${product?.harvestDate?.slice(0, 10)}`,
+                children: `Colhido dia ${product?.harverstDate?.slice(0, 10)}`,
               },
               {
                 color: "red",
@@ -131,7 +130,7 @@ const TimeLineProduct: React.FC = () => {
                 color: "gray",
                 children: (
                   <>
-                    <p>Preparação do Solo{product?.preparingDate}</p>
+                    <p>Preparação do Solo {product?.preparingDate.slice(0, 10)}</p>
                   </>
                 ),
               },

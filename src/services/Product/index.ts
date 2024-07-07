@@ -19,6 +19,7 @@ export const createProduct = (data: ICreateProduct) => {
 };
 
 export const updateProduct = (id: string, data: IChangeProduct) => {
+  console.log(data,"api")
   return api.put(`${url}?id=${id}`, data);
 };
 
@@ -36,9 +37,8 @@ interface IChangeProduct {
   name: string;
   status: number;
   description?: string;
-  category?: string;
   thumb?: string;
-  categoryId?: string;
+  categoryId: string;
   plantingDate: Date;
   harverstDate: Date;
   preparingDate: Date;

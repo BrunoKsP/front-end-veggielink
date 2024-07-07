@@ -1,4 +1,4 @@
-import { ChangeEvent, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 
 import Button from "@mui/material/Button";
@@ -9,14 +9,7 @@ import * as yup from "yup";
 
 import { Typography } from "@mui/material";
 import Seo from "../../../components/Seo";
-import {
-  DivText,
-  FlexWrap,
-  MainPage,
-  Card,
-  NavBar,
-  ImageView,
-} from "./styles";
+import { DivText, FlexWrap, MainPage, Card, NavBar, ImageView } from "./styles";
 import { MenuOutlined } from "@ant-design/icons";
 import DrawerPage from "../../../components/Drawer";
 import Notification from "../../../components/Notification";
@@ -64,10 +57,10 @@ const EditProduct: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(false);
-  const [imageBase64, setImageBase64] = useState("");
+  const [image, setImage] = useState("");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [product, setProduct] = useState<ProductData | null>(null);
-  const [categoryId, setCategoryId] = useState<string | undefined>("");
+  const [categoryId, setCategoryId] = useState<string>("");
   const [notification, setNotification] = useState<{
     type: "success" | "error" | "warning";
     content: string;
@@ -81,47 +74,26 @@ const EditProduct: React.FC = () => {
     handleSubmit,
     formState: { errors },
     setValue,
+    register,
   } = useForm<IForm>({
-    mode: "onSubmit",
+    mode: "all",
     defaultValues: {
-      name: product?.name ?? "",
-      plantingDate: product?.plantingDate,
-      description: product?.description ?? "",
-      thumb: product?.thumb ?? "",
+      name: product?.name,
+      description: product?.description,
     },
-    resolver: yupResolver(validationSchema as any),
+    resolver: yupResolver(validationSchema) as any,
   });
-
-  const handleChange =
-    (
-      name:
-        | "name"
-        | "thumb"
-        | "description"
-        | "category"
-        | "fertilizer"
-        | "observation"
-    ) =>
-    (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setValue(name, e.target.value === "" ? undefined : e.target.value, {
-        shouldValidate: true,
-      });
-    };
 
   const submitForm = useCallback(
     async (data: IForm) => {
       setLoading(true);
-      console.log(imageBase64)
-      console.log(data);
       try {
         if (id)
           await updateProduct(id, {
             ...data,
-            status: 1,
-            categoryId: categoryId,
-            thumb: imageBase64,
+          status: 1,
+          categoryId: categoryId || "undefined",
           });
-          console.log(id,data);
         navigate(`products/info-product/${id}`);
       } catch (error: any) {
         setNotification({ type: "error", content: "Erro Editar Produto!" });
@@ -129,7 +101,7 @@ const EditProduct: React.FC = () => {
         setLoading(false);
       }
     },
-    [categoryId, id, imageBase64, navigate]
+    [categoryId, id, navigate]
   );
 
   useEffect(() => {
@@ -138,6 +110,7 @@ const EditProduct: React.FC = () => {
       try {
         const data = await getProductById(id as string);
         setProduct(data.data);
+        console.log("chamei use");
       } catch (error) {
         console.log(error);
       } finally {
@@ -175,7 +148,7 @@ const EditProduct: React.FC = () => {
               <>
                 <ImageView>
                   <ImageUploader
-                    onChange={setImageBase64}
+                    onChange={(img) => setValue("thumb", img)}
                     defaultValue={product?.thumb}
                   />
                 </ImageView>
@@ -183,12 +156,11 @@ const EditProduct: React.FC = () => {
                   margin="normal"
                   required
                   fullWidth
-                  name="name"
                   label="Nome"
                   type={"text"}
                   id="nome"
                   defaultValue={product?.name}
-                  onChange={handleChange("name")}
+                  {...register("name")}
                   helperText={
                     errors.name && (
                       <Typography variant="body2" color="error">
@@ -201,12 +173,11 @@ const EditProduct: React.FC = () => {
                 <TextField
                   margin="normal"
                   fullWidth
-                  name="description"
                   label="Descricao"
                   type={"text"}
                   id="descricao"
                   defaultValue={product?.description}
-                  onChange={handleChange("description")}
+                  {...register("description")}
                   helperText={
                     errors.description && (
                       <Typography variant="body2" color="error">
@@ -220,12 +191,11 @@ const EditProduct: React.FC = () => {
                   margin="normal"
                   required
                   fullWidth
-                  name="observation"
                   label="Observação"
                   type={"text"}
                   id="observation"
                   defaultValue={product?.observation}
-                  onChange={handleChange("observation")}
+                  {...register("observation")}
                   helperText={
                     errors.observation && (
                       <Typography variant="body2" color="error">
@@ -239,12 +209,11 @@ const EditProduct: React.FC = () => {
                   margin="normal"
                   required
                   fullWidth
-                  name="fertilizer"
                   label="Fertilizante"
                   type={"text"}
                   id="fertilizer"
                   defaultValue={product?.fertilizer}
-                  onChange={handleChange("fertilizer")}
+                  {...register("fertilizer")}
                   helperText={
                     errors.fertilizer && (
                       <Typography variant="body2" color="error">
@@ -297,7 +266,6 @@ const EditProduct: React.FC = () => {
                       backgroundColor: "#08F9B0",
                     },
                   }}
-                  type="submit"
                 >
                   Editar
                 </Button>
